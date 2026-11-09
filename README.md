@@ -1,259 +1,261 @@
-# 🎙️ Gnani Audio Notes Platform
+# 🎙️ Gnani Audio Notes
 
-<div align="center">
+Turn voice memos, meetings, and long audio recordings into clean transcripts, concise summaries, and prioritized action items.
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-frontend--azure--beta--45.vercel.app-7C6FE0?style=for-the-badge&logo=vercel&logoColor=white)](https://frontend-azure-beta-45.vercel.app/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![React 19](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Celery](https://img.shields.io/badge/Celery-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com/)
-
-**An asynchronous enterprise-grade audio intelligence platform for uploading, chunking, transcribing, and summarizing long-form audio files into structured executive notes and actionable insights.**
-
-[🌐 Explore Live Application](https://frontend-azure-beta-45.vercel.app/) • [📖 Architecture](#-architecture-overview) • [⚡ Quickstart](#-quickstart-guide) • [🚀 Deployment](#-deployment-guide)
-
-</div>
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20on%20Vercel-7C6FE0?style=flat-square)](https://frontend-azure-beta-45.vercel.app/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-005571?style=flat-square)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/Frontend-React%2019-20232A?style=flat-square)](https://react.dev/)
+[![Celery](https://img.shields.io/badge/Queue-Celery%20%2B%20Redis-37814A?style=flat-square)](https://docs.celeryq.dev/)
 
 ---
 
-## 📸 Application Showcase
+## What is this?
 
-### 1. Workspace & Intelligent Upload Dropzone
-Upload audio recordings (`.mp3`, `.wav`, `.m4a`) with live client-side validation, drag-and-drop glassmorphic dropzone, and responsive note history.
+A lot of speech-to-text APIs struggle with long audio files. Specifically, Gnani's Vachana STT API throws a `MAX_AUDIO_DURATION_EXCEEDED` error when files exceed ~30 seconds.
+
+**Gnani Audio Notes** fixes this by handling the dirty work:
+1. It inspects your audio file (`.mp3`, `.wav`, `.m4a` up to 100MB).
+2. If it's longer than 25 seconds, it automatically slices the audio into 25-second chunks with a 2-second overlap so no words get cut off mid-sentence.
+3. It pushes jobs to a background queue, transcribes each slice via Gnani STT, and stitches the text back together cleanly.
+4. Once transcribed, it passes the full text to **Meta Llama 3.3 70B** (via NVIDIA NIM) to extract an executive summary, main talking points, and actionable next steps.
+5. Everything updates live on the frontend so you can watch progress step-by-step or listen back to the audio.
+
+---
+
+## Screenshots
+
+### 1. Upload & Workspace
+Drop an audio file, see file size and duration details immediately, and view your past notes.
 
 <div align="center">
-  <img src="docs/screenshots/workspace_upload.png" alt="Gnani Audio Notes Workspace" width="900" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(124, 111, 224, 0.15);" />
+  <img src="docs/screenshots/workspace_upload.png" alt="Workspace" width="850" style="border-radius: 8px;" />
 </div>
 
 <br/>
 
-### 2. Live 5-Stage Processing Stepper & Audio Player
-Track processing in real time across **Uploading $\rightarrow$ Queued $\rightarrow$ Transcribing $\rightarrow$ Summarizing $\rightarrow$ Completed** with in-browser audio playback.
+### 2. Live Progress & Audio Player
+Watch the 5-step pipeline update from **Uploading → Queued → Transcribing → Summarizing → Completed**, with built-in audio playback.
 
 <div align="center">
-  <img src="docs/screenshots/note_detail_progress.png" alt="Note Detail Progress Stepper" width="900" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(124, 111, 224, 0.15);" />
+  <img src="docs/screenshots/note_detail_progress.png" alt="Progress Stepper" width="850" style="border-radius: 8px;" />
 </div>
 
 <br/>
 
-### 3. AI Executive Summary, Key Discussion Points & Action Items
-Extract concise executive summaries, structured bullet points, and prioritized action items powered by **NVIDIA NIM Llama 3.3 70B Instruct**.
+### 3. Summary & Action Items
+Review the generated notes broken down into a quick summary, key discussion points, and next actions.
 
 <div align="center">
-  <img src="docs/screenshots/ai_summary_insights.png" alt="AI Executive Summary and Action Items" width="900" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(124, 111, 224, 0.15);" />
+  <img src="docs/screenshots/ai_summary_insights.png" alt="AI Summary" width="850" style="border-radius: 8px;" />
 </div>
 
 ---
 
-## ✨ Key Features
-
-- **⚡ Asynchronous Queue Architecture**: Decoupled FastAPI backend and Celery task workers backed by Redis for reliable background job execution.
-- **✂️ Dynamic 25s Audio Chunking Pipeline**: Seamlessly slices long audio files into 25-second segments with 2-second overlap, overcoming strict third-party STT duration limits (`MAX_AUDIO_DURATION_EXCEEDED`) and rebuilding unified transcripts.
-- **🎙️ Gnani Vachana STT Integration**: High-accuracy speech-to-text API integration with automatic token refresh, error parsing, and rate limiting.
-- **🧠 NVIDIA NIM AI Summarization**: State-of-the-art Llama 3.3 70B Instruct model prompts generate structured JSON output with executive summaries, key talking points, and actionable items.
-- **🛡️ Resilient Retry & Failure Recovery**: Idempotent queue workers with exponential backoff and interactive UI retry controls for failed transcription or summarization steps.
-- **🎨 Modern Glassmorphic Dashboard**: Light aesthetic designed with soft lavender, violet, and rose accents, Lucide icons, pulsing shimmer skeletons, and fluid micro-animations.
-- **☁️ S3-Compatible Cloud Storage**: Direct audio ingestion and secure presigned URL generation for audio playback via Supabase Object Storage.
-
----
-
-## 🏛️ Architecture Overview
+## How It Works
 
 ```mermaid
-flowchart TD
-    subgraph Client ["Client Layer (React 19 + Vite)"]
-        UI["Web Dashboard\n(Vercel)"]
-    end
+flowchart LR
+    A[Upload Audio\n.mp3 / .wav / .m4a] --> B[FastAPI API]
+    B --> C[(Supabase S3 & Postgres)]
+    B --> D[Redis Queue]
+    D --> E[Celery Worker\nAudio Chunker]
+    E -->|Chunks <= 25s| F[Gnani STT API]
+    F -->|Stitched Transcript| G[NVIDIA NIM\nLlama 3.3 70B]
+    G -->|Summary & Tasks| C
+    B -.->|Poll status| H[React Web UI]
+```
 
-    subgraph Backend ["Backend API (FastAPI)"]
-        API["FastAPI REST Endpoints\n(Render / Railway)"]
-        Store["Supabase S3 Bucket\n(Audio Storage)"]
-        DB[(Supabase PostgreSQL\nState & Transcripts)]
-    end
+### The 25-Second Chunking Trick
+Gnani's STT works best with short audio snippets. When you upload a file longer than 25 seconds:
+- The chunking service slices it into 25-second audio segments with a 2-second overlap.
+- Each segment is sent to Gnani's API.
+- The returned segments are combined into a single continuous transcript before being passed to the LLM.
+- If an individual slice or request fails, the worker retries with exponential backoff rather than dropping the whole job.
 
-    subgraph Queue ["Message Broker"]
-        Redis[("Redis Broker\n(Upstash / Railway)")]
-    end
+---
 
-    subgraph Workers ["Celery Background Workers"]
-        TWorker["Transcription Worker\n(25s Audio Chunker + Gnani STT)"]
-        SWorker["Summarization Worker\n(NVIDIA NIM Llama 3.3 70B)"]
-    end
+## Tech Stack
 
-    subgraph External ["External AI Services"]
-        Gnani["Gnani Vachana STT API"]
-        NIM["NVIDIA NIM Inference API"]
-    end
+- **Frontend**: React 19, TypeScript, Vite, Lucide icons, vanilla CSS (no bloated UI libraries).
+- **Backend API**: FastAPI, Pydantic v2, SlowAPI (rate limiting).
+- **Background Jobs**: Celery, Redis.
+- **Audio Processing**: PyDub, Mutagen, FFmpeg.
+- **Database & Storage**: PostgreSQL (Supabase) via SQLAlchemy & Alembic, Supabase S3 storage (with automatic fallback to local disk if S3 is unavailable).
+- **AI & Speech Models**: Gnani Vachana STT v3 + Meta Llama 3.3 70B Instruct (NVIDIA NIM).
 
-    UI -->|1. Upload Audio| API
-    API -->|2. Store Raw File| Store
-    API -->|3. Record Note State| DB
-    API -->|4. Dispatch Job| Redis
-    Redis -->|5. Consume Job| TWorker
-    TWorker -->|6. Slice & Transcribe| Gnani
-    TWorker -->|7. Save Transcript| DB
-    TWorker -->|8. Enqueue Summary| Redis
-    Redis -->|9. Consume Summary Job| SWorker
-    SWorker -->|10. Generate Insights| NIM
-    SWorker -->|11. Persist Summary| DB
-    UI -.->|Poll Status / Stream Updates| API
+---
+
+## Project Structure
+
+```text
+Gnani-audio/
+├── backend/
+│   ├── app/
+│   │   ├── alembic/              # Database migrations
+│   │   ├── core/                 # Config & rate limiting
+│   │   ├── db/                   # Database connection & models
+│   │   ├── models/               # AudioNote & ProcessingJob schemas
+│   │   ├── queues/               # Job queue dispatcher
+│   │   ├── routers/              # API routes (/api/notes, /api/health)
+│   │   ├── services/             # Audio chunker, Gnani STT, LLM & storage logic
+│   │   ├── workers/              # Celery tasks (transcribe & summarize)
+│   │   └── main.py               # FastAPI entrypoint & in-process worker
+│   ├── requirements.txt
+│   ├── Procfile
+│   └── nixpacks.toml             # Installs FFmpeg for cloud deployments
+├── frontend/
+│   ├── src/
+│   │   ├── api/                  # API client
+│   │   ├── components/           # Dropzone, Stepper, Audio Player, Note Card
+│   │   ├── pages/                # Workspace & Note Detail pages
+│   │   └── types/                # TypeScript types
+│   ├── package.json
+│   └── vite.config.ts
+└── docs/
+    └── screenshots/
 ```
 
 ---
 
-## 🧩 Tech Stack
+## Local Setup
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| **Frontend** | React 19, TypeScript, Vite | Fast, type-safe, responsive glassmorphic web UI |
-| **Icons & UI** | Lucide React, Vanilla CSS | Lightweight, consistent design system & animations |
-| **Backend API** | FastAPI, Pydantic v2 | High-performance asynchronous REST API & validation |
-| **Background Processing** | Celery, Redis | Distributed task queues with exponential backoff retries |
-| **Database** | PostgreSQL (Supabase), SQLAlchemy, Alembic | Relational data persistence and schema migrations |
-| **Object Storage** | Supabase Storage (S3-Compatible) | Secure audio file storage and presigned playback |
-| **Audio Processing** | PyDub, FFmpeg | Audio duration detection, format normalization & chunking |
-| **Speech-to-Text** | Gnani Vachana STT v3 | Neural speech transcription engine |
-| **AI Summarization** | NVIDIA NIM (Meta Llama 3.3 70B Instruct) | High-accuracy structured insight extraction |
+### What You'll Need
+1. **Python 3.11+**
+2. **Node.js 18+**
+3. **FFmpeg** (make sure `ffmpeg` is accessible in your terminal)
+4. **Redis** (running locally or a free cloud instance like Upstash)
 
 ---
 
-## ⚡ Quickstart Guide
-
-### Prerequisites
-- **Python**: 3.11+
-- **Node.js**: 18+
-- **FFmpeg**: Installed and available in your system `PATH`
-- **Redis Server**: Local instance or remote URL (e.g. Upstash)
-
----
-
-### 1. Clone the Repository
+### 1. Clone the repo
 ```bash
 git clone https://github.com/Princ3mish/Gnani-audio.git
 cd Gnani-audio
 ```
 
----
-
-### 2. Backend Setup
+### 2. Backend setup
 ```bash
 cd backend
 
-# Create virtual environment
+# Create & activate a virtual environment
 python -m venv .venv
-# Windows
+
+# On Windows:
 .\.venv\Scripts\activate
-# Linux/macOS
+# On macOS / Linux:
 source .venv/bin/activate
 
-# Install dependencies
+# Install requirements
 pip install -r requirements.txt
 
-# Configure environment variables
+# Create your .env file
 cp .env.example .env
 ```
 
-#### Run Database Migrations
+Fill in your `.env` (see below for the variables needed).
+
+#### Run database migrations:
 ```bash
 python -m alembic -c app/alembic.ini upgrade head
 ```
 
-#### Start Backend Services
-- **Option A (Development — In-Process Celery Worker)**:
-  ```bash
-  uvicorn app.main:app --reload --port 8000
-  ```
-- **Option B (Separate Celery Worker)**:
-  ```bash
-  # Terminal 1: API
-  uvicorn app.main:app --reload --port 8000
+#### Run the server:
+You can run everything in one terminal during development. The FastAPI app automatically starts an in-process Celery worker thread:
+```bash
+uvicorn app.main:app --reload --port 8000
+```
 
-  # Terminal 2: Celery Worker
-  celery -A app.celery_app worker --loglevel=info
-  ```
+*(Optional)* If you prefer running the worker separately like in production:
+```bash
+# Terminal 1:
+uvicorn app.main:app --reload --port 8000
 
----
+# Terminal 2:
+celery -A app.celery_app worker --loglevel=info
+```
 
-### 3. Frontend Setup
+### 3. Frontend setup
 ```bash
 cd ../frontend
-
-# Install dependencies
 npm install
-
-# Start Vite dev server
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+Open [http://localhost:5173](http://localhost:5173) and you're good to go.
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
-Create a `.env` file in `backend/` with the following variables:
+Put these in `backend/.env`:
 
 ```env
-# Database (Supabase PostgreSQL)
+# Database (Postgres / Supabase)
 DATABASE_URL=postgresql://postgres:<password>@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres
 
-# Redis Broker (Upstash / Railway)
+# Redis
 REDIS_URL=rediss://default:<password>@<host>:6379/0
 
 # Object Storage (Supabase S3)
-STORAGE_ENDPOINT=https://<ref>.storage.supabase.co/storage/v1/s3
-STORAGE_ACCESS_KEY=<supabase-storage-access-key>
-STORAGE_SECRET_KEY=<supabase-storage-secret-key>
+STORAGE_ENDPOINT=https://<project-ref>.storage.supabase.co/storage/v1/s3
+STORAGE_ACCESS_KEY=<your-access-key>
+STORAGE_SECRET_KEY=<your-secret-key>
 STORAGE_BUCKET=audio-notes
 
-# Gnani STT API
+# Gnani STT
 GNANI_API_KEY=<your-gnani-api-key>
 GNANI_BASE_URL=https://api.vachana.ai
 
-# NVIDIA NIM LLM
-LLM_API_KEY=<your-nvidia-nim-key>
+# NVIDIA NIM (Llama 3.3 70B)
+LLM_API_KEY=<your-nvidia-api-key>
 LLM_MODEL=meta/llama-3.3-70b-instruct
 LLM_BASE_URL=https://integrate.api.nvidia.com/v1
 
-# Security & CORS
-FRONTEND_URL=https://frontend-azure-beta-45.vercel.app,http://localhost:5173
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173,https://frontend-azure-beta-45.vercel.app
+```
+
+In `frontend/.env` (optional, defaults to `http://localhost:8000` in dev):
+```env
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
 ---
 
-## 🚀 Deployment Guide
+## API Endpoints
 
-### Frontend on Vercel
-1. Import repository on [Vercel](https://vercel.com).
-2. Set **Root Directory** to `frontend`.
-3. Set **Framework Preset** to `Vite`.
-4. Configure Environment Variable:
-   - `VITE_API_BASE_URL`: `https://gnani-audio.onrender.com`
+All endpoints are prefixed with `/api`:
 
----
-
-### Backend on Render (Single-Service Free Tier)
-Render's free tier provides a single web service. The application uses an in-process daemon worker thread (`--pool=solo`) to execute Celery tasks directly inside the FastAPI lifespan without requiring a second paid instance:
-1. Create a **Web Service** on [Render](https://render.com).
-2. Set **Root Directory** to `backend`.
-3. Set **Runtime** to `Python 3`.
-4. **Build Command**: `pip install -r requirements.txt`
-5. **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. Add the environment variables listed in the `.env` template above.
+| Method | Endpoint | What it does |
+|---|---|---|
+| `POST` | `/notes` | Uploads audio (`multipart/form-data`) and queues transcription |
+| `GET` | `/notes` | Returns list of all notes with status and timestamps |
+| `GET` | `/notes/{id}` | Gets note details, full transcript, and structured summary |
+| `GET` | `/notes/{id}/audio` | Generates a presigned URL to stream the audio |
+| `POST` | `/notes/{id}/retry` | Retries transcription if something failed |
+| `POST` | `/notes/{id}/retry-summary` | Re-runs just the LLM summary step without re-transcribing |
+| `GET` | `/health` | Health check for database, worker thread, and CORS config |
 
 ---
 
-## 🛡️ Error Handling & Resilience
+## Deployment Notes
 
-- **Audio Chunking Guarantee**: Files $\ge 25\text{s}$ are segmented dynamically using `AudioChunkingService` with a 2-second overlap, avoiding third-party STT 30-second duration hard ceilings.
-- **Exponential Backoff**: Up to 3 automatic retries with exponential backoff on transient upstream LLM/STT connection dropouts.
-- **Fail-Safe UI Retries**: In case of network errors or token exhaustion, users can trigger targeted retries (`Retry Transcription` or `Retry Summarization`) directly from the note detail view.
+### Frontend (Vercel)
+- Connect repo, select `frontend` as root directory, preset `Vite`.
+- Add environment variable `VITE_API_BASE_URL` pointing to your deployed backend URL.
+
+### Backend (Render Free Tier)
+Render's free tier only gives you one free web service, which normally makes running Celery alongside FastAPI difficult. 
+
+To solve this without paying for an extra worker dyno, the backend runs Celery in an in-process daemon thread (`--pool=solo`) inside the FastAPI lifespan. It handles tasks directly in the background without needing a second service.
+
+1. Create a Web Service on Render with root directory `backend`.
+2. Build command: `pip install -r requirements.txt`.
+3. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+4. Add your environment variables from `.env`.
 
 ---
 
-<div align="center">
+## License
 
-Built with 💜 by [Princ3mish](https://github.com/Princ3mish)
-
-</div>
+MIT © [Princ3mish](https://github.com/Princ3mish)

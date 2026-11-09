@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlalchemy
 alembic
 psycopg2-binary
+psycopg[binary]
 pydantic-settings
 python-multipart
 celery
@@ -13,5 +14,5 @@ httpx
 mutagen
 openai
 pydub
-audioop-lts
+audioop-lts; python_version >= '3.13'
 slowapi
