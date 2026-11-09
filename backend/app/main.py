@@ -112,6 +112,8 @@ def _get_cors_origins() -> list[str]:
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "https://gnani.rahulkpatra.tech",
+        "http://gnani.rahulkpatra.tech",
     }
     if settings.FRONTEND_URL:
         for u in settings.FRONTEND_URL.split(","):
